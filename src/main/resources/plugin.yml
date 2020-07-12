@@ -1,0 +1,7 @@
+name: YaPlaceholder
+version: ${project.version}
+main: cn.ykdlb.yaplaceholder.YaPlaceholder
+api-version: 1.16
+depend: [PlaceholderAPI]
+authors: [APJifengc]
+description: Custom more advance Placeholder
