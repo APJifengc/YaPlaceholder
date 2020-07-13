@@ -145,7 +145,7 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                     case "SWITCH":
                         return params.get(Integer.parseInt(getValue(params.get(1), player))+1);
                     case "PARSE":
-                        return PlaceholderAPI.setPlaceholders(player, getShownText(getValue(params.get(1), player)));
+                        return getDataText(PlaceholderAPI.setPlaceholders(player, getShownText(getValue(params.get(1), player))));
                     case "APJ":
                         // 夹 带 私 货
                         return "牛逼";
@@ -383,14 +383,32 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
      */
     public String getShownText(String string) {
         if (isString(string)) {
+            if (string.length() == 0) return string;
             return string.substring(1,string.length()-1);
         }
-        if (isFloat(string)) {
+        if (Pattern.compile("^\\d+.\\d+F$").matcher(string).find()) {
             return string.substring(0,string.length()-1);
         }
         return string;
     }
 
+    /**
+     * Get a shown text's data text.
+     *
+     * @param string The shown string.
+     * @return The data text.
+     */
+    public String getDataText(String string) {
+        if (Pattern.compile("^\\d+.\\d+F$").matcher(string).find() ||
+                Pattern.compile("^\\d+$").matcher(string).find() ||
+                string.equals("true") || string.equals("false")) {
+            return string;
+        } else if (Pattern.compile("^\\d+.\\d+$").matcher(string).find()) {
+            return string + "F";
+        } else {
+            return "\"" + string + "\"";
+        }
+    }
     /**
      * Detect is the data string String type.
      *
@@ -398,6 +416,7 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
      * @return Is the data string String type.
      */
     public boolean isString(String string) {
+        if (string.length() == 0) return true;
         return string.charAt(0) == '"' && string.charAt(string.length()-1) == '"';
     }
 
