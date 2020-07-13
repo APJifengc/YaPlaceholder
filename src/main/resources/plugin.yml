@@ -1,5 +1,5 @@
 name: YaPlaceholder
-version: ${project.version}
+version: 1.0
 main: cn.ykdlb.yaplaceholder.YaPlaceholder
 api-version: 1.16
 depend: [PlaceholderAPI]
