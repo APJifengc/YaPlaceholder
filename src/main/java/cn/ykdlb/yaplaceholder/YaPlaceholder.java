@@ -1,6 +1,7 @@
 package cn.ykdlb.yaplaceholder;
 
 import me.clip.placeholderapi.PlaceholderAPI;
+import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -10,13 +11,12 @@ import org.bukkit.plugin.java.JavaPlugin;
  * @author APJifengc
  */
 public final class YaPlaceholder extends JavaPlugin {
-    public PlaceholderAPI placeholderAPI;
-
     @Override
     public void onEnable() {
         // Load PlaceholderAPI
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            placeholderAPI = (PlaceholderAPI) Bukkit.getPluginManager().getPlugin("PlaceholderAPI");
+            // Register Placeholder Expansion
+            new YaPlaceholderExpansion(this).register();
             this.getLogger().info("PlaceholderAPI successfully loaded.");
         } else {
             this.getLogger().info("Can't find PlaceholderAPI! Did you installed the PlaceholderAPI?");
