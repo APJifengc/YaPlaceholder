@@ -1,5 +1,5 @@
 name: YaPlaceholder
-version: 1.0
+version: 1.0.1
 main: cn.ykdlb.yaplaceholder.YaPlaceholder
 api-version: 1.13
 depend: [PlaceholderAPI]
