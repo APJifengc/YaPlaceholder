@@ -1,24 +1,69 @@
 package cn.ykdlb.yaplaceholder;
 
-import jdk.nashorn.internal.runtime.regexp.joni.Regex;
+import cn.ykdlb.yaplaceholder.exception.InvalidFunctionException;
+import cn.ykdlb.yaplaceholder.exception.UnknownFunctionException;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import org.bukkit.entity.Player;
+import org.bukkit.OfflinePlayer;
 
-import java.util.ArrayList;
-import java.util.Calendar;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
-import java.util.List;
 
 /**
- * This is the Placeholder Expansion class.
+ * This is the placeholder expansion class.
  *
  * @author APJifengc
+ * @author Yoooooory
  */
 public class YaPlaceholderExpansion extends PlaceholderExpansion {
+
     private final YaPlaceholder plugin;
+
+    public final Pattern bracketRegex = Pattern.compile("\\(([^()]+)\\)");
+    public final Pattern functionRegex = Pattern.compile("([a-zA-Z_$][a-zA-Z\\d_$]+)\\(([^()]*)\\)");
+
+    /**
+     * Math operators' priority.
+     */
+    private final Map<String, Integer> mathPriority = new HashMap<String, Integer>() {{
+        put("(", 14);
+        put("*", 12); // num
+        put("/", 12); // num
+        put("#", 12); // num "#" = "%"
+        put("+", 11); // num & str
+        put("-", 11); // num
+        put("+-", 11); // num
+        put(">>", 10); // num
+        put(">>>", 10); // num
+        put("<<", 10); // num
+        put("&", 7); // num
+        put("^", 6); // num
+        put("|", 5); // num
+    }};
+
+    private final Map<String, Integer> comparePriority = new HashMap<String, Integer>() {{
+        put(">", 9); // num
+        put(">=", 9); // num
+        put("<", 9); // num
+        put("<=", 9); // num
+        put("==", 8); // obj
+        put("!=", 8); // obj
+        put("&&", 4); // bool
+        put("||", 3); // bool
+        // !
+        // Future feature: ? :
+        // Unnecessary: = += -= *= /= #= >>= <<= &= ^= |=
+    }};
+
+    /**
+     * Math, comparison and condition operators' priority.
+     */
+    private final Map<String, Integer> priority = new HashMap<String, Integer>() {{
+        putAll(mathPriority);
+        putAll(comparePriority);
+    }};
 
     /**
      * When the class constructed, the expansion will automatics register.
@@ -30,23 +75,13 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
     }
 
     @Override
-    public boolean persist() {
-        return true;
-    }
-
-    @Override
-    public boolean canRegister() {
-        return true;
-    }
-
-    @Override
     public String getIdentifier() {
-        return "yaplaceholder";
+        return "e";
     }
 
     @Override
     public String getAuthor() {
-        return "APJifengc";
+        return plugin.getDescription().getAuthors().toString();
     }
 
     @Override
@@ -55,379 +90,426 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
     }
 
     @Override
-    public String onPlaceholderRequest(Player player, String identifier) {
+    public String onRequest(OfflinePlayer player, String params) {
         try {
-            return getShownText(getValue(identifier, player));
+            return getPlainString(parseExpression(player, params));
         } catch (Exception e) {
             e.printStackTrace();
-            return "§4Error: " + e.getMessage();
+            return "§4Error";
         }
     }
 
     /**
-     * Get the string's value.
+     * Parse a expression.
      *
-     * @param string The string to get value.
-     * @param player The player to get value.
-     * @return The string's value.
-     * @throws Exception Throws when the string can't analysis.
+     * @param player     A refer player.
+     * @param expression The expression.
+     * @return The value of the expression.
      */
-    public String getValue(String string, Player player) throws Exception {
-        if (string.contains("/&")) {
-            return getValue(string.replace("/&","%"), player);
-        } else {
-            if (string.charAt(0) == '{' && string.charAt(string.length()-1) == '}') {
-                char closeChar = 0;
-                IntStream chars = string.substring(1,string.length()-1).chars();
-                int startPos = 1;
-                int pos = 1;
-                List<String> params = new ArrayList<>();
-                for (int character : chars.toArray()) {
-                    if (closeChar != 0) {
-                        if (character == closeChar) {
-                            closeChar = 0;
+    public Object parseExpression(OfflinePlayer player, String expression) throws InvalidFunctionException, UnknownFunctionException {
+        Object obj = getDataValue(player, expression);
+        if (obj != null) {
+            return obj;
+        }
+        String exception = String.format("Cannot solve expression '%s'.", expression);
+        Stack<Object> objects = new Stack<>();
+        Stack<String> operators = new Stack<>();
+        int index = -1;
+        String stat = "";
+        for (int i = 0; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (index != -1) {
+                String str = expression.substring(index, i);
+                // Building content / calculate expression
+                switch (stat) {
+                    case "string":
+                        // Building string.
+                        if (c == '\'') {
+                            // A string's end or content ('').
+                            if (i + 1 < expression.length() && expression.charAt(i + 1) == '\'') {
+                                // content
+                                i++;
+                            } else {
+                                // end the build.
+                                objects.push(getDataValue(player, expression.substring(index, i + 1)));
+                                index = -1;
+                                stat = "";
+                            }
                         }
-                    } else {
-                        if (character == '{') closeChar = '}';
-                        if (character == '(') closeChar = ')';
-                        if (character == '"') closeChar = '"';
-                        if (character == '|') {
-                            params.add(string.substring(startPos, pos));
-                            startPos = pos +1;
-                        }
-                    }
-                    pos++;
-                }
-                params.add(string.substring(startPos, pos));
-
-                switch(params.get(0)) {
-                    case "IF":
-                        String param1 = getValue(params.get(1), player);
-                        String param2 = getValue(params.get(2), player);
-                        String param3 = getValue(params.get(3), player);
-                        if (param1.equals("true")) {
-                            return param2;
+                        break;
+                    case "number":
+                        // Building number.
+                        if (Character.isDigit(c)) {
+                            continue;
+                        } else if (c == '.') {
+                            if (i + 1 < expression.length() && !str.contains(".") && Character.isDigit(expression.charAt(i + 1))) {
+                                // A part of number
+                                i++;
+                            } else {
+                                throw new IllegalArgumentException(exception);
+                            }
                         } else {
-                            return param3;
+                            // Not a part of number, end the build.
+                            objects.push(getDataValue(player, str));
+                            stat = "";
+                            index = -1;
+                            if (c == '-') {
+                                index = i;
+                                stat = "operator";
+                            } else if (c != 'd' && c != 'D' && c != 'f' && c != 'F') {
+                                i--;
+                            }
                         }
-                    case "TEXTJOIN":
-                        List<String> texts = new ArrayList<>();
-                        for (int i=1;i<params.size();i++) {
-                            texts.add(getShownText(params.get(i)));
+                        break;
+                    case "operator":
+                        // Try to build operator.
+                        if (c == '\'' || Character.isDigit(c) || (!str.equals("+") && c == '-') || c == 't' || c == 'f') {
+                            // Not a operator now.
+                            stat = "";
+                            String oper = str;
+                            index = -1;
+                            if (priority.containsKey(oper)) {
+                                // Calc expression.
+                                if (")".equals(oper)) {
+                                    // Special
+                                    while (true) {
+                                        try {
+                                            String op = operators.pop();
+                                            if (!"(".equals(op)) {
+                                                Object object = objects.pop();
+                                                objects.push(calculateResult(op, objects.pop(), object));
+                                            } else {
+                                                break;
+                                            }
+                                        } catch (Exception e) {
+                                            throw new IllegalArgumentException(exception);
+                                        }
+                                    }
+                                } else if (!operators.empty() && priority.get(oper) < priority.get(operators.peek())) {
+                                    while (true) {
+                                        if (operators.empty() || priority.get(oper) >= priority.get(operators.peek())) {
+                                            operators.push(oper);
+                                            break;
+                                        }
+                                        Object object = objects.pop();
+                                        try {
+                                            objects.push(calculateResult(operators.pop(), objects.pop(), object));
+                                        } catch (Exception e) {
+                                            throw new IllegalArgumentException(exception);
+                                        }
+                                    }
+                                } else {
+                                    // Push operator.
+                                    operators.push(oper);
+                                }
+                            } else {
+                                throw new IllegalArgumentException(exception);
+                            }
+                            i--;
                         }
-                        return "\"" + String.join (
-                                getShownText(getValue(params.get(0), player)),
-                                texts
-                        ) + "\"";
-                    case "REPLACE":
-                        param1 = getValue(params.get(1), player);
-                        param2 = getValue(params.get(2), player);
-                        param3 = getValue(params.get(3), player);
-                        return getShownText(param1).replace(getShownText(param2),getShownText(param3));
-                    case "TIME":
-                        String type = getValue(params.get(1), player);
-                        switch (type) {
-                            case "HOUR":
-                                return String.valueOf(Calendar.getInstance().get(Calendar.HOUR));
-                            case "MINUTE":
-                                return String.valueOf(Calendar.getInstance().get(Calendar.MINUTE));
-                            case "SECOND":
-                                return String.valueOf(Calendar.getInstance().get(Calendar.SECOND));
-                            case "DAY":
-                                return String.valueOf(Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
-                            case "MONTH":
-                                return String.valueOf(Calendar.getInstance().get(Calendar.MONTH));
-                            case "YEAR":
-                                return String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
-                            case "WEEKDAY":
-                                return String.valueOf(Calendar.getInstance().get(Calendar.DAY_OF_WEEK));
-                        }
-                    case "SWITCH":
-                        return params.get(Integer.parseInt(getValue(params.get(1), player))+1);
-                    case "PARSE":
-                        return getDataText(PlaceholderAPI.setPlaceholders(player, getShownText(getValue(params.get(1), player))));
-                    case "APJ":
-                        // 夹 带 私 货
-                        return "牛逼";
+                        break;
                     default:
-                        throw new Exception(params.get(0) + " is not a available function.");
+                        throw new IllegalArgumentException(exception);
                 }
-            } else if (string.charAt(0) == '(' && string.charAt(string.length()-1) == ')') {
-                return getValue(string.substring(1, string.length() - 1), player);
             } else {
-                char closeChar = 0;
-                int pos = 0;
-                String left,right;
-                int[] chars = string.chars().toArray();
-                // Priority 3
-                for (int character : chars) {
-                    if (closeChar != 0) {
-                        if (character == closeChar) {
-                            closeChar = 0;
+                // An element's start.
+                if (c == ' ') {
+                } else if (c == '\'') {
+                    // A string's start.
+                    stat = "string";
+                } else if (Character.isDigit(c) || c == '-') {
+                    // A number's start.
+                    stat = "number";
+                } else if (c == 't' || c == 'f') {
+                    // A boolean's start, build.
+                    int a = c == 't' ? 3 : 4;
+                    if (i + a < expression.length()) {
+                        if ("true".equals(expression.substring(i, i + a))) {
+                            objects.add(true);
+                        } else if ("false".equals(expression.substring(i, i + a + 1))) {
+                            objects.add(false);
+                        } else {
+                            throw new IllegalArgumentException(exception);
                         }
                     } else {
-                        if (character == '{') closeChar = '}';
-                        if (character == '(') closeChar = ')';
-                        if (character == '"') closeChar = '"';
-                        if (character == '+') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            if (isString(left) || isString(right)) {
-                                return "\"" + getShownText(left) + getShownText(right) +"\"";
-                            }
-                            if (isFloat(left) || isFloat(right)) {
-                                return (Float.parseFloat(getShownText(left)) +
-                                        Float.parseFloat(getShownText(right))) + "F";
-                            }
-                            return String.valueOf(Integer.parseInt(getShownText(left)) +
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '-') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            if (isFloat(left) || isFloat(right)) {
-                                return (Float.parseFloat(getShownText(left)) -
-                                        Float.parseFloat(getShownText(right))) + "F";
-                            }
-                            return String.valueOf(Integer.parseInt(getShownText(left)) -
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '>' && string.charAt(pos+1) == '=') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+2), player);
-                            if (Float.parseFloat(getShownText(left)) >=
-                                    Float.parseFloat(getShownText(right))) {
-                                return "true";
+                        throw new IllegalArgumentException(exception);
+                    }
+                    continue;
+                } else if (c == '$' || c == '_' || Character.isLetter(c)) {
+                    boolean isString = false;
+                    StringBuilder sb = new StringBuilder(String.valueOf(c));
+                    Stack<Integer> indexes = new Stack<Integer>();
+                    while (true) {
+                        c = expression.charAt(++i);
+                        sb.append(c);
+                        if (c == '\'') {
+                            if (isString) {
+                                if (i + 1 < expression.length() && expression.charAt(i + 1) == '\'') {
+                                    // content
+                                    sb.append("'");
+                                    i++;
+                                } else {
+                                    // end the build.
+                                    isString = false;
+                                }
                             } else {
-                                return "false";
+                                isString = true;
                             }
-                        }
-                        if (character == '>') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            if (Float.parseFloat(getShownText(left)) >
-                                    Float.parseFloat(getShownText(right))) {
-                                return "true";
-                            } else {
-                                return "false";
+                        } else if (c == '(') {
+                            if (!isString) {
+                                indexes.push(sb.length() - 1);
                             }
-                        }
-                        if (character == '<' && string.charAt(pos+1) == '=') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+2), player);
-                            if (Float.parseFloat(getShownText(left)) <=
-                                    Float.parseFloat(getShownText(right))) {
-                                return "true";
+                        } else if (c == ')' && !isString) {
+                            if (!indexes.empty()) {
+                                for (int j = indexes.pop() - 1; j >= 0; j--) {
+                                    char cha = sb.charAt(j);
+                                    if (!Character.isLetter(cha) && !Character.isDigit(cha)) {
+                                        if (cha == '$' || cha == '_') {
+                                            sb.replace(j, sb.length(), getDataString(parseFunction(player, sb.substring(j))));
+                                        } else {
+                                            sb.replace(j + 1, sb.length(), getDataString(parseFunction(player, sb.substring(j + 1))));
+                                        }
+                                        break;
+                                    } else if (j == 0) {
+                                        sb.replace(j, sb.length(), getDataString(parseFunction(player, sb.substring(j))));
+                                        break;
+                                    }
+                                }
+                                if (indexes.empty()) {
+                                    objects.add(getDataValue(player, sb.toString()));
+                                    sb.delete(0, sb.length());
+                                    break;
+                                }
                             } else {
-                                return "false";
-                            }
-                        }
-                        if (character == '<') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            if (Float.parseFloat(getShownText(left)) <
-                                    Float.parseFloat(getShownText(right))) {
-                                return "true";
-                            } else {
-                                return "false";
-                            }
-                        }
-                        if (character == '=' && string.charAt(pos+1) == '=') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+2), player);
-                            if (left.equals(right)) {
-                                return "true";
-                            } else {
-                                return "false";
-                            }
-                        }
-                        if (character == '!' && string.charAt(pos+1) == '=') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+2), player);
-                            if (!left.equals(right)) {
-                                return "true";
-                            } else {
-                                return "false";
+                                throw new IllegalArgumentException(exception);
                             }
                         }
                     }
-                    pos++;
+                    i++;
+                    continue;
+                } else {
+                    // maybe an operator..
+                    stat = "operator";
                 }
-                closeChar = 0;
-                pos = 0;
-                // Priority 2
-                if (string.charAt(0) == '!') {
-                    left = getValue(string.substring(1), player);
-                    if (left.equals("true")) {
-                        return "false";
-                    } else {
-                        return "true";
-                    }
-                }
-                for (int character : chars) {
-                    if (closeChar != 0) {
-                        if (character == closeChar) {
-                            closeChar = 0;
-                        }
-                    } else {
-                        if (character == '{') closeChar = '}';
-                        if (character == '(') closeChar = ')';
-                        if (character == '"') closeChar = '"';
-                        if (character == '%') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1
-                            ), player);
-                            if (isFloat(left) || isFloat(right)) {
-                                return Float.parseFloat(getShownText(left)) %
-                                        Float.parseFloat(getShownText(right)) + "F";
-                            }
-                            return String.valueOf(Integer.parseInt(getShownText(left)) %
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '*') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            if (isFloat(left) || isFloat(right)) {
-                                return Float.parseFloat(getShownText(left)) *
-                                        Float.parseFloat(getShownText(right)) + "F";
-                            }
-                            return String.valueOf(Integer.parseInt(getShownText(left)) *
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '/') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            if (isFloat(left) || isFloat(right)) {
-                                return Float.parseFloat(getShownText(left)) /
-                                        Float.parseFloat(getShownText(right)) + "F";
-                            }
-                            return String.valueOf(Integer.parseInt(getShownText(left)) /
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                    }
-                    pos++;
-                }
-                closeChar = 0;
-                pos = 0;
-                // Priority 1
-                for (int character : chars) {
-                    if (closeChar != 0) {
-                        if (character == closeChar) {
-                            closeChar = 0;
-                        }
-                    } else {
-                        if (character == '{') closeChar = '}';
-                        if (character == '(') closeChar = ')';
-                        if (character == '"') closeChar = '"';
-                        if (character == '>' && string.charAt(pos+1) == '>') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+2), player);
-                            return String.valueOf(Integer.parseInt(getShownText(left)) >>
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '<' && string.charAt(pos+1) == '<') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+2), player);
-                            return String.valueOf(Integer.parseInt(getShownText(left)) <<
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '|' && string.charAt(pos+2) == '|') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            if (left.equals("true") || right.equals("true")) {
-                                return "true";
-                            } else {
-                                return "false";
-                            }
-                        }
-                        if (character == '&' && string.charAt(pos+1) == '&') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+2), player);
-                            if (left.equals("true") && right.equals("true")) {
-                                return "true";
-                            } else {
-                                return "false";
-                            }
-                        }
-                        if (character == '&') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            return String.valueOf(Integer.parseInt(getShownText(left)) &
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '|') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            return String.valueOf(Integer.parseInt(getShownText(left)) |
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                        if (character == '^') {
-                            left = getValue(string.substring(0, pos), player);
-                            right = getValue(string.substring(pos+1), player);
-                            return String.valueOf(Integer.parseInt(getShownText(left)) ^
-                                    Integer.parseInt(getShownText(right)));
-                        }
-                    }
-                    pos++;
-                }
-                return string;
+                index = i;
             }
         }
+        if (index != -1) {
+            objects.push(getDataValue(player, expression.substring(index)));
+        }
+        while (!operators.empty()) {
+            Object object = objects.pop();
+            objects.push(calculateResult(operators.pop(), objects.pop(), object));
+        }
+        try {
+            return objects.pop();
+        } catch (
+                EmptyStackException e) {
+            throw new IllegalArgumentException(exception);
+        }
+
     }
 
     /**
-     * Get a data's shown text.
+     * Parse a function string.
      *
-     * @param string The data string.
-     * @return The shown text.
+     * @param player A refer player.
+     * @param func   The function string needs to be parsed.
+     * @return The result of parsing.
+     * @throws UnknownFunctionException Throws when the function is unknown.
+     * @throws InvalidFunctionException Throws when cannot solve the string as a function.
+     * @throws IllegalArgumentException Throws when function got some error.
      */
-    public String getShownText(String string) {
-        if (isString(string)) {
-            if (string.length() == 0) return string;
-            return string.substring(1,string.length()-1);
+    public Object parseFunction(OfflinePlayer player, String func) throws UnknownFunctionException, InvalidFunctionException {
+        List<Object> args = getArguments(player, func);
+        if (args == null) {
+            throw new InvalidFunctionException(String.format("Cannot solve '%s' as a function.", func));
         }
-        if (Pattern.compile("^\\d+.\\d+F$").matcher(string).find()) {
-            return string.substring(0,string.length()-1);
+        String name = (String) args.get(0);
+        if ("if".equalsIgnoreCase(name)) {
+            if (args.size() == 4) {
+                if (args.get(1) instanceof Boolean) {
+                    if ((boolean) args.get(1)) {
+                        return args.get(2);
+                    } else {
+                        return args.get(3);
+                    }
+                } else {
+                    throw new IllegalArgumentException(String.format("The first argument of 'if' function should be a boolean, but got '%s'.", args.get(1)));
+                }
+            } else {
+                throw new IllegalArgumentException(String.format("Function 'if' except 3 arguments but got %d arguments.", args.size() - 1));
+            }
+        } else if ("switch".equalsIgnoreCase(name)) {
+            if (args.size() >= 3) {
+                if (args.get(1) instanceof Integer) {
+                    int index = (Integer) args.get(1);
+                    if (index < args.size() - 2) {
+                        return args.get(index + 2);
+                    } else {
+                        throw new IndexOutOfBoundsException(String.format("The number of elements are %d (index %d), but got switched for %s.", args.size() - 2, args.size() - 3, args.get(1)));
+                    }
+                } else {
+                    throw new IllegalArgumentException(String.format("The first argument of 'switch' function should be a integer, but got '%s'.", args.get(1)));
+                }
+            } else {
+                throw new IllegalArgumentException(String.format("Function 'switch' except at least 2 arguments but got %d arguments.", args.size() - 1));
+            }
+        } else if ("value".equalsIgnoreCase(name)) {
+            if (args.size() == 2) {
+                if (args.get(1) instanceof String) {
+                    return parseExpression(player, (String) args.get(1));
+                } else {
+                    throw new IllegalArgumentException(String.format("The first argument of 'switch' function should be a string, but got '%s'.", args.get(1)));
+                }
+            } else {
+                throw new IllegalArgumentException(String.format("Function 'value' except 1 arguments but got %d arguments.", args.size() - 1));
+            }
         }
-        return string;
+        throw new UnknownFunctionException(String.format("Unknown function '%s'.", args.get(0)));
     }
 
     /**
-     * Get a shown text's data text.
+     * Get arguments of a minimal function string.
      *
-     * @param string The shown string.
-     * @return The data text.
+     * @param player A refer player.
+     * @param string A minimal function string.
+     * @return The arguments of the string, the first element is the function name (String). Return null for a invalid function.
      */
-    public String getDataText(String string) {
-        if (Pattern.compile("^\\d+.\\d+F$").matcher(string).find() ||
-                Pattern.compile("^\\d+$").matcher(string).find() ||
-                string.equals("true") || string.equals("false")) {
-            return string;
-        } else if (Pattern.compile("^\\d+.\\d+$").matcher(string).find()) {
-            return string + "F";
+    public List<Object> getArguments(OfflinePlayer player, String string) throws UnknownFunctionException, InvalidFunctionException {
+        List<Object> list = new ArrayList<>();
+        list.add(string.substring(0, string.indexOf('(')));
+        StringBuilder sb = new StringBuilder();
+        for (String str : string.substring(string.indexOf('(') + 1, string.length() - 1).split(",")) {
+            sb.append(str);
+            try {
+                list.add(parseExpression(player, sb.toString()));
+                sb.delete(0, sb.length());
+            } catch (Exception ignored) {
+            }
+        }
+        return sb.length() > 0 ? null : list;
+    }
+
+    /**
+     * Get the value of a string.
+     *
+     * @param player A refer player.
+     * @param string The string.
+     * @return The string's value. Null for unknown string.
+     */
+    public Object getDataValue(OfflinePlayer player, String string) {
+        if ("''".equals(string)) {
+            // Empty string
+            return "";
+        } else if (string.replace("''", "").matches("'[^']*'")) {
+            // String
+            string = PlaceholderAPI.setPlaceholders(player, string.replace("''", "'").replaceAll("([^\\\\])\\$", "$1%"));
+            return string.substring(1, string.length() - 1);
+        } else if (string.matches("-?\\d+\\.\\d+[dfDF]?")) {
+            // Decimal (Double or Float)
+            return Double.parseDouble(string);
+        } else if (string.matches("-?\\d+")) {
+            // Integer
+            return Integer.parseInt(string);
+        } else if ("true".equals(string) || "false".equals(string)) {
+            // Boolean
+            return Boolean.parseBoolean(string);
+        }
+        return null;
+    }
+
+    /**
+     * Get plain string.
+     *
+     * @param object An object.
+     * @return The plain string of the object.
+     */
+    String getPlainString(Object object) {
+        if (object instanceof Double) {
+            return BigDecimal.valueOf((Double) object).stripTrailingZeros().toPlainString();
         } else {
-            return "\"" + string + "\"";
+            return object.toString();
         }
-    }
-    /**
-     * Detect is the data string String type.
-     *
-     * @param string The data string.
-     * @return Is the data string String type.
-     */
-    public boolean isString(String string) {
-        if (string.length() == 0) return true;
-        return string.charAt(0) == '"' && string.charAt(string.length()-1) == '"';
     }
 
     /**
-     * Detect is the data string Float type.
+     * Get data string.
      *
-     * @param string The data string.
-     * @return Is the data string Float type.
+     * @param object An object.
+     * @return The data string of the object.
      */
-    public boolean isFloat(String string) {
-        Matcher matcher = Pattern.compile("^\\d+.\\d+(F)?$").matcher(string);
-        return matcher.find();
+    String getDataString(Object object) {
+        if (object instanceof String) {
+            return "'" + (String) ((String) object).replace("'", "''") + "'";
+        } else {
+            return object.toString();
+        }
     }
+
+    Object calculateResult(String oper, Object obj1, Object obj2) {
+        if (obj1 instanceof Number && obj2 instanceof Number) {
+            if (obj1 instanceof Integer && obj2 instanceof Integer) {
+                // Integer only
+                int num1 = (int) obj1;
+                int num2 = (int) obj2;
+                switch (oper) {
+                    case "#":
+                        return Math.floorMod(num1, num2);
+                    case "<<":
+                        return num1 << num2;
+                    case ">>":
+                        return num1 >> num2;
+                    case ">>>":
+                        return num1 >>> num2;
+                    case "&":
+                        return num1 & num2;
+                    case "^":
+                        return num1 ^ num2;
+                    case "|":
+                        return num1 | num2;
+                }
+            }
+            double num1 = Double.parseDouble(obj1.toString());
+            double num2 = Double.parseDouble(obj2.toString());
+            switch (oper) {
+                case "+":
+                    return num1 + num2;
+                case "-":
+                case "+-":
+                    return num1 - num2;
+                case "*":
+                    return num1 * num2;
+                case "/":
+                    return num1 / num2;
+                case "#":
+                    return num1 % num2;
+                case "<":
+                    return num1 < num2;
+                case ">":
+                    return num1 > num2;
+                case "<=":
+                    return num1 <= num2;
+                case ">=":
+                    return num1 >= num2;
+            }
+        } else if (obj1 instanceof Boolean && obj2 instanceof Boolean) {
+            if ("&&".equals(oper)) {
+                return (boolean) obj1 && (boolean) obj2;
+            } else if ("||".equals(oper)) {
+                return (boolean) obj1 || (boolean) obj2;
+            }
+        } else if (obj1 instanceof String && obj2 instanceof String) {
+            if ("+".equals(oper)) {
+                return (String) obj1 + (String) obj2;
+            }
+        }
+        if ("==".equals(oper)) {
+            return obj1.equals(obj2);
+        } else if ("!=".equals(oper)) {
+            return !obj1.equals(obj2);
+        }
+        throw new IllegalArgumentException();
+    }
+
 }
