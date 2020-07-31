@@ -9,13 +9,14 @@ import org.bukkit.plugin.java.JavaPlugin;
  * @author APJifengc
  */
 public final class YaPlaceholder extends JavaPlugin {
+
     @Override
     public void onEnable() {
         // Load PlaceholderAPI
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             // Register placeholder expansion
             new YaPlaceholderExpansion(this).register();
-            getLogger().info("Found PlaceholderAPI successfully.");
+            getLogger().info("YaPlaceholder loaded.");
         } else {
             getLogger().info("Can't find PlaceholderAPI! Did you installed the PlaceholderAPI?");
             getPluginLoader().disablePlugin(this);
@@ -24,7 +25,9 @@ public final class YaPlaceholder extends JavaPlugin {
 
     @Override
     public void onDisable() {
-
+        getLogger().info("YaPlaceholder uninstalled.");
     }
+
+
 
 }

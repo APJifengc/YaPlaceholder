@@ -9,9 +9,27 @@ import java.util.regex.Pattern;
 public class TestPlaceholder {
 
     public static void main(String[] args) {
-        Matcher m = Pattern.compile("([^()]+)\\([^()]*\\)").matcher("abc(def(1,2))");
-        m.find();
-        System.out.println(m.group(1));
+        System.out.println(1+(1-1));
+        System.out.println(1+2);
+        System.out.println(1-2);
+        System.out.println(1*2);
+        System.out.println(1/2);
+        System.out.println(1%2);
+        System.out.println(1<<2);
+        System.out.println(-1>>2);
+        System.out.println(-1>>>2);
+        System.out.println(1&2);
+        System.out.println(1^2);
+        System.out.println(1|2);
+        System.out.println(true&&false);
+        System.out.println(true||false);
+        System.out.println(1>2);
+        System.out.println(1<2);
+        System.out.println(1>=2);
+        System.out.println(1<=2);
+        System.out.println(1==2);
+        System.out.println(1!=2);
+        System.out.println("true&&true".substring(0,3));
     }
 
 }

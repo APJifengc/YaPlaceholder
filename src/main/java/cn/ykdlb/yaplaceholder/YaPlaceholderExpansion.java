@@ -21,9 +21,6 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
 
     private final YaPlaceholder plugin;
 
-    public final Pattern bracketRegex = Pattern.compile("\\(([^()]+)\\)");
-    public final Pattern functionRegex = Pattern.compile("([a-zA-Z_$][a-zA-Z\\d_$]+)\\(([^()]*)\\)");
-
     /**
      * Math operators' priority.
      */
@@ -72,6 +69,11 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
      */
     public YaPlaceholderExpansion(YaPlaceholder plugin) {
         this.plugin = plugin;
+    }
+
+    @Override
+    public boolean persist() {
+        return true;
     }
 
     @Override
@@ -163,31 +165,17 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                         break;
                     case "operator":
                         // Try to build operator.
-                        if (c == '\'' || Character.isDigit(c) || (!str.equals("+") && c == '-') || c == 't' || c == 'f') {
+                        if (c == '\'' || Character.isDigit(c) || (!"+".equals(str) && c == '-') || c == 't' || c == 'f' || c == '(') {
                             // Not a operator now.
                             stat = "";
                             String oper = str;
                             index = -1;
                             if (priority.containsKey(oper)) {
                                 // Calc expression.
-                                if (")".equals(oper)) {
-                                    // Special
+                                // 2-(1+2)*(1+3)
+                                if (!operators.empty() && priority.get(oper) < priority.get(operators.peek())) {
                                     while (true) {
-                                        try {
-                                            String op = operators.pop();
-                                            if (!"(".equals(op)) {
-                                                Object object = objects.pop();
-                                                objects.push(calculateResult(op, objects.pop(), object));
-                                            } else {
-                                                break;
-                                            }
-                                        } catch (Exception e) {
-                                            throw new IllegalArgumentException(exception);
-                                        }
-                                    }
-                                } else if (!operators.empty() && priority.get(oper) < priority.get(operators.peek())) {
-                                    while (true) {
-                                        if (operators.empty() || priority.get(oper) >= priority.get(operators.peek())) {
+                                        if (operators.empty() || priority.get(oper) >= priority.get(operators.peek()) || "(".equals(operators.peek())) {
                                             operators.push(oper);
                                             break;
                                         }
@@ -222,11 +210,13 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                     stat = "number";
                 } else if (c == 't' || c == 'f') {
                     // A boolean's start, build.
-                    int a = c == 't' ? 3 : 4;
-                    if (i + a < expression.length()) {
-                        if ("true".equals(expression.substring(i, i + a))) {
+                    int a = c == 't' ? 4 : 5;
+                    if (i + a <= expression.length()) {
+                        String substring = expression.substring(i, i + a);
+                        i += a - 1;
+                        if ("true".equals(substring)) {
                             objects.add(true);
-                        } else if ("false".equals(expression.substring(i, i + a + 1))) {
+                        } else if ("false".equals(substring)) {
                             objects.add(false);
                         } else {
                             throw new IllegalArgumentException(exception);
@@ -238,7 +228,7 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                 } else if (c == '$' || c == '_' || Character.isLetter(c)) {
                     boolean isString = false;
                     StringBuilder sb = new StringBuilder(String.valueOf(c));
-                    Stack<Integer> indexes = new Stack<Integer>();
+                    Stack<Integer> indexes = new Stack<>();
                     while (true) {
                         c = expression.charAt(++i);
                         sb.append(c);
@@ -277,7 +267,6 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                                 }
                                 if (indexes.empty()) {
                                     objects.add(getDataValue(player, sb.toString()));
-                                    sb.delete(0, sb.length());
                                     break;
                                 }
                             } else {
@@ -285,7 +274,22 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                             }
                         }
                     }
-                    i++;
+                    continue;
+                } else if (c == ')') {
+                    // Special
+                    while (true) {
+                        try {
+                            String op = operators.pop();
+                            if (!"(".equals(op)) {
+                                Object object = objects.pop();
+                                objects.push(calculateResult(op, objects.pop(), object));
+                            } else {
+                                break;
+                            }
+                        } catch (Exception e) {
+                            throw new IllegalArgumentException(exception);
+                        }
+                    }
                     continue;
                 } else {
                     // maybe an operator..
@@ -381,9 +385,12 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
         list.add(string.substring(0, string.indexOf('(')));
         StringBuilder sb = new StringBuilder();
         for (String str : string.substring(string.indexOf('(') + 1, string.length() - 1).split(",")) {
+            if (sb.length() != 0) {
+                sb.append(',');
+            }
             sb.append(str);
             try {
-                list.add(parseExpression(player, sb.toString()));
+                list.add(Objects.requireNonNull(parseExpression(player, sb.toString())));
                 sb.delete(0, sb.length());
             } catch (Exception ignored) {
             }
