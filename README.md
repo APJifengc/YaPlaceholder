@@ -14,8 +14,9 @@ Use placeholder `%e_expression%` to get a advance placeholder. *('e' means 'expr
 
 ## Operator
 ### Arithmetic Operators
+**Note: In code, `#` (modulus) uses `%` to operate decimals but uses `Math.floorMod` to operate intergers.**
 | Name                  | Chars         | Priority       | Example               |
-| --------------------- | ------------- | -------------- | -------               |
+| --------------------- | ------------- | -------------- | --------------------- |
 | Brackets              | ()            | ***Supreme***  | `%e_1+(1-1)%` got `1` |
 | Addition              | +             | 11             | `%e_1+2%` got `3`     |
 | Subtraction           | -             | 11             | `%e_1-2%` got `-1`    |
@@ -25,21 +26,21 @@ Use placeholder `%e_expression%` to get a advance placeholder. *('e' means 'expr
 
 ### Bitwise Operators
 **Note: Integer only, or a exception will be threw out.**
-| Name                  | Chars  | Priority | Example                      |
-| --------------------- | ------ | -------- | ---------------------------- |
-| Left shift            | <<     | 10       | `%e_1<<2` got `4`            |
-| Right shift           | \>\>   | 10       | `%e_-1>>2` got `-1`          |
-| Zero fill right shift | \>\>\> | 10       | `%e_-1>>>2` got `1073741823` |
-| Bitwise and           | &      | 7        | `%e_1&2` got `0`             |
-| Bitwise XOR           | ^      | 6        | `%e_1^2` got `3`             |
-| Bitwise or            | \|     | 5        | `%e_1|2` got `3`             |
+| Name                  | Chars  | Priority | Example                       |
+| --------------------- | ------ | -------- | ----------------------------- |
+| Left shift            | <<     | 10       | `%e_1<<2` got `4`             |
+| Right shift           | \>\>   | 10       | `%e_-1>>2` got `-1`           |
+| Zero fill right shift | \>\>\> | 10       | `%e_-1>>>2` got `1073741823`  |
+| Bitwise and           | &      | 7        | `%e_1&2` got `0`              |
+| Bitwise XOR           | ^      | 6        | `%e_1^2` got `3`              |
+| Bitwise or            | \|     | 5        | `%e_1\|2` got `3`             |
 
 ### Logical Operators
-| Name               | Chars | Priority | Example                      |
-| -----------------  | ----- | -------- | ---------------------------- |
-| ~~Not~~ **(todo)** | !     | ?        | ***(Future Feature)***       |
-| Logical and        | &&    | 4        | `%e_true&&false%` got `false`|
-| Logical or         | \|\|  | 3        | `%e_true||false%` got `true` |
+| Name               | Chars | Priority | Example                        |
+| -----------------  | ----- | -------- | ------------------------------ |
+| ~~Not~~ **(todo)** | !     | ?        | ***(Future Feature)***         |
+| Logical and        | &&    | 4        | `%e_true&&false%` got `false`  |
+| Logical or         | \|\|  | 3        | `%e_true\|\|false%` got `true` |
 
 ### Assignment Operators
 **Note: Except '=='(equals) and '!=' (not equals) can compare string, other operators can only compare numbers.**
@@ -64,11 +65,11 @@ If the bool is `false`, return value2.
 ### switch
 **Params:** Integer number, Object selections...  
 Return the selection of the number.  
-**Example:** `%e_switch(1,'Hi, bob!','How are you?')`  
+**Example:** `%e_switch(1,'Hi, bob!','How are you?')%`  
 **Meaning:** It should return 'How are you?' though it is the second argument because its index is 1 (index count from 0).
 
 ### value
 **Params:** String text  
 Parse the text to a number or boolean.  
-**Example:** `%e_value('1')==1`  
+**Example:** `%e_value('1')==1%`  
 **Meaning:** It will return `true` because they are equals. But `%e_'1'==1` will return `false` because string can't be compared with integer. If you use `value()`, the integer will be turned into a string.
