@@ -1,5 +1,5 @@
 # YaPlaceholder
-A plugin depends on PlaceholderAPI that can let you custom advancer placeholders.
+An extension plugin of PlaceholderAPI that can let you custom advancer placeholders.
 
 ## Usage
 Use placeholder `%e_expression%` to get a advance placeholder. *('e' means 'expression' i guess..)*
