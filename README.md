@@ -1,69 +1,74 @@
 # YaPlaceholder
-Custom more advance Placeholder.
+A plugin depends on PlaceholderAPI that can let you custom advancer placeholders.
+
 ## Usage
-Use placeholder `%yaplaceholder_sometext%` to get a advance placeholder.  
-### Basic Syntax
-Use `{ }` to call a function, and use `|` to split the params.  
-Example: `{FUNCTION|PARAM1|PARAM2|...}`.  
-### Data Type
-| Type    | Pattern     | Description      |  
-| ------- | ----------- | ---------------- |
-| Integer | Nums        | A number.        |  
-| Float   | Nums+F      | A float number.  |  
-| String  | "Some Text" | A text string.   |   
-| Boolean | true/false  | A boolean value. |  
-### Expressions
-#### Arithmetic Expression
-| Name        | Chars | Priority |
-| ----------- | ----- | -------- |
-| Plus        | +     | 3        |
-| Minus       | -     | 3        |
-| By          | *     | 2        |
-| Divide By   | /     | 2        |
-| Mod         | %     | 2        |
-| And         | &     | 1        |
-| Or          | \|    | 1        |
-| Xor         | ^     | 1        |
-| Shift Left  | <<    | 1        |
-| Shift Right | \>\>  | 1        |
-#### Logic Expression 
-| Name              | Chars | Priority |
-| ----------------- | ----- | -------- |
-| Greater Than      | >     | 3        |
-| Less Than         | <     | 3        |
-| Greater Or Equals | >=    | 3        |
-| Less Or Equals    | <=    | 3        |
-| Equals            | ==    | 3        |
-| Not Equals        | !=    | 3        |
-| Not               | !     | 2        |
-| And               | &&    | 1        |
-| Or                | \|\|  | 1        |
-### Functions
-#### IF
-Params: Boolean bool, Any value1, Any value2  
+Use placeholder `%e_expression%` to get a advance placeholder. *('e' means 'expression' i guess..)*
+
+## Data Type
+| Type    | Pattern          | Description      | In code | Example  |
+| ------- | ---------------- | :--------------: | :-----: | :------: |
+| Integer | num              | An integer.      | int     |  255892  |
+| Decimal | num+(d\|d\|f\|F) | A float number.  | double  |  5663d   |
+| String  | "Some Text"      | A text string.   | String  |  "addme" |
+| Boolean | true/false       | A boolean value. | boolean |  false   |
+
+## Operator
+### Arithmetic Operators
+| Name                  | Chars         | Priority       | Example               |
+| --------------------- | ------------- | -------------- | -------               |
+| Brackets              | ()            | ***Supreme***  | `%e_1+(1-1)%` got `1` |
+| Addition              | +             | 3              | `%e_1+2%` got `3`     |
+| Subtraction           | -             | 3              | `%e_1-2%` got `-1`    |
+| Multiplication        | *             | 2              | `%e_1*2%` got `2`     |
+| Division              | /             | 2              | `%e_1/2%` got `0.5`   |
+| Modulus               | **# (not %)** | 2              | `%e_1#2%` got `1`     |
+
+### Bitwise Operators
+**Note: Integer only, or a exception will be threw out.**
+| Name                  | Chars  | Priority | Example                      |
+| --------------------- | ------ | -------- | ---------------------------- |
+| Bitwise and           | &      | 1        | `%e_1&2` got `0`             |
+| Bitwise or            | \|     | 1        | `%e_1|2` got `3`             |
+| Bitwise XOR           | ^      | 1        | `%e_1^2` got `3`             |
+| Left shift            | <<     | 1        | `%e_1<<2` got `4`            |
+| Right shift           | \>\>   | 1        | `%e_-1>>2` got `-1`          |
+| Zero fill right shift | \>\>\> | 1        | `%e_-1>>>2` got `1073741823` |
+
+### Logical Operators
+| Name               | Chars | Priority | Example                      |
+| -----------------  | ----- | -------- | ---------------------------- |
+| ~~Not~~ **(todo)** | !     | 2        | ***(Future Feature)***       |
+| Logical and        | &&    | 1        | `%e_true&&false%` got `false`|
+| Logical or         | \|\|  | 1        | `%e_true||false%` got `true` |
+
+### Assignment Operators
+**Note: Except '=='(equals) and '!=' (not equals) can compare string, other operators can only compare numbers.**
+| Name              | Chars | Priority | Example               |
+| ----------------- | ----- | -------- | --------------------- |
+| Greater Than      | >     | 3        | `%e_1>1` got `false`  |
+| Less Than         | <     | 3        | `%e_1<2` got `true`   |
+| Greater Or Equals | >=    | 3        | `%e_1>=2` got `false` |
+| Less Or Equals    | <=    | 3        | `%e_1<=2` got `true`  |
+| Equals            | ==    | 3        | `%e_1==1` got `true`  |
+| Not Equals        | !=    | 3        | `%e_1!=1` got `false` |
+
+## Function
+**Basic syntax: function(param1, param2, ...)**
+### if
+**Params:** Boolean bool, Object value1, Object value2  
 If the bool is `true`, return value1.  
 If the bool is `false`, return value2.  
-#### TEXTJOIN
-Params: String connect, String strings...  
-Return the strings connected with the connect string.  
-#### REPLACE
-Params: String source, String text1, String text2.  
-Return the source string replace all text1 to text2.  
-#### TIME
-Params: String type.  
-Types: `HOUR`, `MINUTE`, `SECOND`, `DAY`, `MONTH`, `YEAR`, `WEEKDAY`  
-Return the time now.  
-#### SWITCH
-Params: Integer number, All selections...  
+**Example:** `%e_if(value('$player_health$')>0,value('$player_health$'),'Dead')%`  
+**Meaning:** If you installed the PlaceholderAPI extension 'player', it should return players' health when they are alive or return 'Dead' when they are dead.
+
+### switch
+**Params:** Integer number, Object selections...  
 Return the selection of the number.  
-#### PARSE
-Params: String text.  
-Parse the text by PlaceholderAPI.  
-Note: You can use `/&` to replace `%`.  
-## Examples
-### Player Heart
-```
-%yaplaceholder_{IF|{PARSE|"/&player_health/&"}!=0.0F|{PARSE|"/&player_health/&"}/2+" Hearts"|"Died"}%
-```
-When the player's health isn't zero, return the player's heart count(Health/2) + " Hearts".  
-When the player's health is zero, return "Died".  
+**Example:** `%e_switch(1,'Hi, bob!','How are you?')`  
+**Meaning:** It should return 'How are you?' though it is the second argument because its index is 1 (index count from 0).
+
+### value
+**Params:** String text  
+Parse the text to a number or boolean.  
+**Example:** `%e_value('1')==1`  
+**Meaning:** It will return `true` because they are equals. But `%e_'1'==1` will return `false` because string can't be compared with integer. If you use `value()`, the integer will be turned into a string.
