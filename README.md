@@ -17,40 +17,40 @@ Use placeholder `%e_expression%` to get a advance placeholder. *('e' means 'expr
 | Name                  | Chars         | Priority       | Example               |
 | --------------------- | ------------- | -------------- | -------               |
 | Brackets              | ()            | ***Supreme***  | `%e_1+(1-1)%` got `1` |
-| Addition              | +             | 3              | `%e_1+2%` got `3`     |
-| Subtraction           | -             | 3              | `%e_1-2%` got `-1`    |
-| Multiplication        | *             | 2              | `%e_1*2%` got `2`     |
-| Division              | /             | 2              | `%e_1/2%` got `0.5`   |
-| Modulus               | **# (not %)** | 2              | `%e_1#2%` got `1`     |
+| Addition              | +             | 11             | `%e_1+2%` got `3`     |
+| Subtraction           | -             | 11             | `%e_1-2%` got `-1`    |
+| Multiplication        | *             | 12             | `%e_1*2%` got `2`     |
+| Division              | /             | 12             | `%e_1/2%` got `0.5`   |
+| Modulus               | **# (not %)** | 12             | `%e_1#2%` got `1`     |
 
 ### Bitwise Operators
 **Note: Integer only, or a exception will be threw out.**
 | Name                  | Chars  | Priority | Example                      |
 | --------------------- | ------ | -------- | ---------------------------- |
-| Bitwise and           | &      | 1        | `%e_1&2` got `0`             |
-| Bitwise or            | \|     | 1        | `%e_1|2` got `3`             |
-| Bitwise XOR           | ^      | 1        | `%e_1^2` got `3`             |
-| Left shift            | <<     | 1        | `%e_1<<2` got `4`            |
-| Right shift           | \>\>   | 1        | `%e_-1>>2` got `-1`          |
-| Zero fill right shift | \>\>\> | 1        | `%e_-1>>>2` got `1073741823` |
+| Left shift            | <<     | 10       | `%e_1<<2` got `4`            |
+| Right shift           | \>\>   | 10       | `%e_-1>>2` got `-1`          |
+| Zero fill right shift | \>\>\> | 10       | `%e_-1>>>2` got `1073741823` |
+| Bitwise and           | &      | 7        | `%e_1&2` got `0`             |
+| Bitwise XOR           | ^      | 6        | `%e_1^2` got `3`             |
+| Bitwise or            | \|     | 5        | `%e_1|2` got `3`             |
 
 ### Logical Operators
 | Name               | Chars | Priority | Example                      |
 | -----------------  | ----- | -------- | ---------------------------- |
-| ~~Not~~ **(todo)** | !     | 2        | ***(Future Feature)***       |
-| Logical and        | &&    | 1        | `%e_true&&false%` got `false`|
-| Logical or         | \|\|  | 1        | `%e_true||false%` got `true` |
+| ~~Not~~ **(todo)** | !     | ?        | ***(Future Feature)***       |
+| Logical and        | &&    | 4        | `%e_true&&false%` got `false`|
+| Logical or         | \|\|  | 3        | `%e_true||false%` got `true` |
 
 ### Assignment Operators
 **Note: Except '=='(equals) and '!=' (not equals) can compare string, other operators can only compare numbers.**
 | Name              | Chars | Priority | Example               |
 | ----------------- | ----- | -------- | --------------------- |
-| Greater Than      | >     | 3        | `%e_1>1` got `false`  |
-| Less Than         | <     | 3        | `%e_1<2` got `true`   |
-| Greater Or Equals | >=    | 3        | `%e_1>=2` got `false` |
-| Less Or Equals    | <=    | 3        | `%e_1<=2` got `true`  |
-| Equals            | ==    | 3        | `%e_1==1` got `true`  |
-| Not Equals        | !=    | 3        | `%e_1!=1` got `false` |
+| Greater Than      | >     | 9        | `%e_1>1` got `false`  |
+| Less Than         | <     | 9        | `%e_1<2` got `true`   |
+| Greater Or Equals | >=    | 9        | `%e_1>=2` got `false` |
+| Less Or Equals    | <=    | 9        | `%e_1<=2` got `true`  |
+| Equals            | ==    | 8        | `%e_1==1` got `true`  |
+| Not Equals        | !=    | 8        | `%e_1!=1` got `false` |
 
 ## Function
 **Basic syntax: function(param1, param2, ...)**
