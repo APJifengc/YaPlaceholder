@@ -96,7 +96,7 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
         try {
             return getPlainString(parseExpression(player, params));
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return "§4Error";
         }
     }
@@ -499,6 +499,8 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                     return num1 <= num2;
                 case ">=":
                     return num1 >= num2;
+                case "==":
+                    return num1 == num2;
             }
         } else if (obj1 instanceof Boolean && obj2 instanceof Boolean) {
             if ("&&".equals(oper)) {
