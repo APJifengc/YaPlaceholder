@@ -513,12 +513,16 @@ public class YaPlaceholderExpansion extends PlaceholderExpansion {
                 return (String) obj1 + (String) obj2;
             }
         }
-        if ("==".equals(oper)) {
-            return obj1.equals(obj2);
-        } else if ("!=".equals(oper)) {
-            return !obj1.equals(obj2);
+        switch (oper) {
+            case "==":
+                return obj1.equals(obj2);
+            case "!=":
+                return !obj1.equals(obj2);
+            case "+":
+                return getPlainString(obj1) + getPlainString(obj2);
+            default:
+                throw new IllegalArgumentException();
         }
-        throw new IllegalArgumentException();
     }
 
 }
