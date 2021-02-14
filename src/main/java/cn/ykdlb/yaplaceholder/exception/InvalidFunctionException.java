@@ -3,7 +3,7 @@ package cn.ykdlb.yaplaceholder.exception;
 /**
  * @author Yoooooory
  */
-public class InvalidFunctionException extends Exception{
+public class InvalidFunctionException extends Exception {
 
     public InvalidFunctionException() {
         super();
