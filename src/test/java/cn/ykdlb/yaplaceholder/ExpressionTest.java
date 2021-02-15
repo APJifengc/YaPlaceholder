@@ -26,7 +26,7 @@ class ExpressionTest {
     }
 
     @Test
-    public void fromInfixExpression() throws Exception {
+    public void fromInfixExpression() {
         Expression test1 = Expression.fromInfixExpression("5+9");
         System.out.println("test1: " + test1);
         assertEquals(3, test1.size());
@@ -109,7 +109,7 @@ class ExpressionTest {
     }
 
     @Test
-    public void calculateValue() throws Exception {
+    public void calculateValue() {
         OfflinePlayer player = mock(OfflinePlayer.class);
         Expression test1 = Expression.fromInfixExpression("if(5==(2+switch(1,2,3)),9d,6f)*3D");
         System.out.println("test1: " + test1);
@@ -118,6 +118,32 @@ class ExpressionTest {
         Expression test2 = Expression.fromInfixExpression("if(!(1==1),1,2)");
         System.out.println("test2:" + test2);
         assertEquals("2", test2.calculateValue(player));
+
+        Expression test3 = Expression.fromInfixExpression("!if(-1+1==0, 1-5==2, -3+2==(-1))");
+        assertFalse(test3.isError());
+        assertEquals("false", test3.calculateValue(player));
+    }
+
+    @Test
+    public void functionTest() {
+        OfflinePlayer player = mock(OfflinePlayer.class);
+
+        var test1 = Expression.fromInfixExpression("substr(\"APJifengc\", 2, 7)");
+        assertEquals("Jifen", test1.calculateValue(player));
+
+        var test2 = Expression.fromInfixExpression("repeat(\"*{i}\", 5) + \"*\"");
+        assertEquals("*1*2*3*4*5*", test2.calculateValue(player));
+
+        var test3 = Expression.fromInfixExpression("max(1, 5, 999) + min(5, 8, -1)");
+        assertEquals("998", test3.calculateValue(player));
+
+        var test4 = Expression.fromInfixExpression("time()");
+        assertFalse(test4.isError());
+        System.out.println(test4.calculateValue(player));
+
+        var test5 = Expression.fromInfixExpression("formatTime(time(), \"yyyy-MM-dd HH:mm:ss\")");
+        assertFalse(test5.isError());
+        System.out.println(test5.calculateValue(player));
     }
 
     public void init() throws NoSuchFieldException, IllegalAccessException {

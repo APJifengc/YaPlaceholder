@@ -51,6 +51,7 @@ public class Expression extends ArrayList<Component> {
         for (int i = 0; i < infix.length(); i++) {
             char ch = infix.charAt(i);
             if (!isInString) {
+                if (ch == ' ') continue;
                 if (ch == '(') {
                     if (status == Status.EXPRESSION) {
                         paramCounter.push(new MutableInt(0));
@@ -85,6 +86,7 @@ public class Expression extends ArrayList<Component> {
                         return ERROR;
                     }
                     if (builder.length() > 0) try {
+                        if (depth.peek() != null) paramCounter.peek().add(1);
                         expression.add(Value.getValueFromString(builder.toString(), i - builder.length()));
                         builder.delete(0, builder.length());
                     } catch (UnknownDataTypeException e) {
@@ -98,7 +100,6 @@ public class Expression extends ArrayList<Component> {
                         return ERROR;
                     } else operators.pop();
                     if (depth.peek() != null) {
-                        paramCounter.peek().add(1);
                         Function function = depth.peek();
                         int count = paramCounter.peek().toInteger();
                         var paramSizes = function.getParamsType().stream()
@@ -168,7 +169,7 @@ public class Expression extends ArrayList<Component> {
                 } else {
                     if (status == Status.EXPRESSION || status == Status.NONE) {
                         builder.append(ch);
-                        if (status == Status.NONE && ch == '"') isInString = true;
+                        if (ch == '"') isInString = true;
                         status = Status.EXPRESSION;
                     } else {
                         if (builder.length() > 0) try {
