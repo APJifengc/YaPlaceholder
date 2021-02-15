@@ -1,7 +1,5 @@
 package cn.ykdlb.yaplaceholder;
 
-import java.lang.reflect.Constructor;
-
 public class Component {
     private final int column;
 

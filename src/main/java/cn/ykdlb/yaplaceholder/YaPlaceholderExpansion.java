@@ -15,8 +15,7 @@ import java.util.regex.Pattern;
 /**
  * This is the placeholder expansion class.
  *
- * @author APJifengc
- * @author Yoooooory
+ * @author APJifengc, Yoooooory
  */
 public class YaPlaceholderExpansion extends PlaceholderExpansion {
     private Map<String, Expression> map = new HashMap<>();

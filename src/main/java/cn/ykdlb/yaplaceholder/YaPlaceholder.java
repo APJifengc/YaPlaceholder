@@ -27,10 +27,6 @@ public class YaPlaceholder extends JavaPlugin {
 
     private static final Reflections reflections = new Reflections("cn.ykdlb.yaplaceholder");
 
-    public static Reflections getReflections() {
-        return reflections;
-    }
-
     @Override
     public void onEnable() {
         init();
@@ -40,7 +36,7 @@ public class YaPlaceholder extends JavaPlugin {
             new YaPlaceholderExpansion(this).register();
             getLogger().info("YaPlaceholder loaded.");
         } else {
-            getLogger().info("Can't find PlaceholderAPI! Did you installed the PlaceholderAPI?");
+            getLogger().severe("Can't find PlaceholderAPI! Did you installed the PlaceholderAPI?");
             getPluginLoader().disablePlugin(this);
         }
     }

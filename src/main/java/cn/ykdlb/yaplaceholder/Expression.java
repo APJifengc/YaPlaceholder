@@ -35,7 +35,7 @@ public class Expression extends ArrayList<Component> {
 
     private final String infix;
 
-    public Expression(String infix) {
+    private Expression(String infix) {
         super();
         this.infix = infix;
     }
@@ -115,7 +115,7 @@ public class Expression extends ArrayList<Component> {
                         expression.add(function);
                         paramCounter.pop();
                     }
-                    status = Status.OPERATOR;
+                    status = Status.NONE;
                     depth.pop();
                     if (!operators.empty() && operators.peek() instanceof LogicalNot) expression.add(operators.pop());
                 } else if (ch == ',') {
@@ -137,7 +137,7 @@ public class Expression extends ArrayList<Component> {
                     }
                 } else if (OPERATOR_CHARSET.contains(ch)) {
                     if (status == Status.OPERATOR || status == Status.NONE) {
-                        if (builder.length() == 0) expression.add(new IntegerValue(0, i));
+                        if (expression.size() == 0) expression.add(new IntegerValue(0, i));
                         builder.append(ch);
                         status = Status.OPERATOR;
                     } else {
@@ -203,9 +203,9 @@ public class Expression extends ArrayList<Component> {
     }
 
     private static void printErrorMessage(String expression, String message, int column) {
-        logger.warning(ChatColor.RED + "Error at column " + column + ": " + message);
-        logger.warning(ChatColor.RED + expression);
-        logger.warning(ChatColor.RED + " ".repeat(column) + "^");
+        logger.warning("Error at column " + column + ": " + message);
+        logger.warning(expression);
+        logger.warning(" ".repeat(column) + "^");
     }
 
     public String calculateValue(OfflinePlayer player) {
@@ -253,6 +253,10 @@ public class Expression extends ArrayList<Component> {
             }
         }
         return ((Value<?>) valueStack.pop()).getString();
+    }
+
+    public boolean isError() {
+        return this == ERROR;
     }
 
     private enum Status {
