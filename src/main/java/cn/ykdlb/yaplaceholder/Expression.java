@@ -86,7 +86,6 @@ public class Expression extends ArrayList<Component> {
                         return ERROR;
                     }
                     if (builder.length() > 0) try {
-                        if (depth.peek() != null) paramCounter.peek().add(1);
                         expression.add(Value.getValueFromString(builder.toString(), i - builder.length()));
                         builder.delete(0, builder.length());
                     } catch (UnknownDataTypeException e) {
@@ -100,6 +99,7 @@ public class Expression extends ArrayList<Component> {
                         return ERROR;
                     } else operators.pop();
                     if (depth.peek() != null) {
+                        if (!(expression.get(expression.size() - 1) instanceof StartParam)) paramCounter.peek().add(1);
                         Function function = depth.peek();
                         int count = paramCounter.peek().toInteger();
                         var paramSizes = function.getParamsType().stream()
@@ -142,7 +142,11 @@ public class Expression extends ArrayList<Component> {
                     }
                 } else if (OPERATOR_CHARSET.contains(ch)) {
                     if (status == Status.OPERATOR || status == Status.NONE) {
-                        if (expression.size() == 0) expression.add(new IntegerValue(0, i));
+                        if ((expression.size() == 0 ||
+                                (expression.get(expression.size() - 1) instanceof StartParam) ||
+                                (!operators.empty() && operators.peek() instanceof Bracket))
+                                        && ch == '-'
+                        ) expression.add(new IntegerValue(0, i));
                         builder.append(ch);
                         status = Status.OPERATOR;
                     } else {
