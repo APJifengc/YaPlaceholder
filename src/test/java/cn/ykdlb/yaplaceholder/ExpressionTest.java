@@ -116,13 +116,16 @@ class ExpressionTest {
         assertEquals("18.0", test1.calculateValue(player));
 
         Expression test2 = Expression.fromInfixExpression("if(!(1==1),1,2)");
-        System.out.println("test2:" + test2);
+        System.out.println("test2: " + test2);
         assertEquals("2", test2.calculateValue(player));
 
         Expression test3 = Expression.fromInfixExpression("!if(-1+1==0, 1-5==2, -3+2==(-1))");
-        System.out.println(test3);
         assertFalse(test3.isError());
         assertEquals("true", test3.calculateValue(player));
+
+        Expression test4 = Expression.fromInfixExpression("\"TT\"*5");
+        assertFalse(test4.isError());
+        assertEquals("TTTTTTTTTT", test4.calculateValue(player));
     }
 
     @Test
@@ -145,6 +148,12 @@ class ExpressionTest {
         var test5 = Expression.fromInfixExpression("formatTime(time(), \"yyyy-MM-dd HH:mm:ss\")");
         assertFalse(test5.isError());
         System.out.println(test5.calculateValue(player));
+
+        var test6 = Expression.fromInfixExpression("sqrt(2)");
+        assertFalse(test6.isError());
+        assertEquals(String.valueOf(Math.sqrt(2)), test6.calculateValue(player));
+
+        assertEquals(String.valueOf(Math.pow(2, 32)), Expression.fromInfixExpression("pow(2,32)").calculateValue(player));
     }
 
     public void init() throws NoSuchFieldException, IllegalAccessException {

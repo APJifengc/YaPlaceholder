@@ -2,6 +2,7 @@ package cn.ykdlb.yaplaceholder.value;
 
 import cn.ykdlb.yaplaceholder.operator.Operator;
 import cn.ykdlb.yaplaceholder.operator.arithmetic.Add;
+import cn.ykdlb.yaplaceholder.operator.arithmetic.Multi;
 import cn.ykdlb.yaplaceholder.operator.assignment.Equals;
 import cn.ykdlb.yaplaceholder.operator.assignment.NotEquals;
 import cn.ykdlb.yaplaceholder.type.Type;
@@ -11,7 +12,7 @@ public class StringValue extends Value<String> {
     public StringValue(String value, int column) {
         super(value, column);
     }
-    
+
     @Override
     public @NotNull String getString() {
         return getValue();
@@ -29,6 +30,10 @@ public class StringValue extends Value<String> {
         );
         if (operator instanceof Add) return new StringValue(
                 getValue() + value.getValue().toString(),
+                getColumn()
+        );
+        if (operator instanceof Multi) return new StringValue(
+                getValue().repeat((Integer) value.getValue()),
                 getColumn()
         );
         throw new UnsupportedOperationException("The operator " + operator.getString() +
