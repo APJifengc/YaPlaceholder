@@ -1,7 +1,5 @@
 package cn.ykdlb.yaplaceholder.type;
 
-import cn.ykdlb.yaplaceholder.operator.Operator;
-import cn.ykdlb.yaplaceholder.operator.assignment.Equals;
 import cn.ykdlb.yaplaceholder.value.BooleanValue;
 import cn.ykdlb.yaplaceholder.value.IntegerValue;
 import cn.ykdlb.yaplaceholder.value.ObjectValue;
@@ -27,15 +25,16 @@ public class BooleanType extends Type<Boolean> {
 
     @Override
     public @NotNull Value<Boolean> cast(Value<?> value) throws ClassCastException {
-        if (value instanceof IntegerValue) return new BooleanValue(((IntegerValue) value).getValue() != 0, value.getColumn());
+        if (value instanceof IntegerValue)
+            return new BooleanValue(((IntegerValue) value).getValue() != 0, value.getColumn());
         if (value instanceof ObjectValue) {
             try {
                 value = Type.get("Integer").cast(value);
                 return new BooleanValue(((IntegerValue) value).getValue() != 0, value.getColumn());
             } catch (ClassCastException e) {
-                throw new ClassCastException("The value " + value.getString()+ " cannot cast to Boolean.");
+                throw new ClassCastException("The value " + value.getString() + " cannot be cast to Boolean.");
             }
         }
-        throw new ClassCastException("The type " + value.getType().getName() + " cannot cast to Boolean.");
+        throw new ClassCastException("The type " + value.getType().getName() + " cannot be cast to Boolean.");
     }
 }

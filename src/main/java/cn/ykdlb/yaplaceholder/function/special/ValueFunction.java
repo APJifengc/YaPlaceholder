@@ -10,6 +10,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class ValueFunction extends Function {
+
+    private final List<List<Type<?>>> paramsType = Collections.singletonList(
+            Collections.singletonList(Type.get("String"))
+    );
+
     public ValueFunction(int column) {
         super(column);
     }
@@ -20,19 +25,17 @@ public class ValueFunction extends Function {
     }
 
     @Override
-    public List<Type<?>> getParamsType() {
-        return Collections.singletonList(
-                Type.get("String")
-        );
+    public List<List<Type<?>>> getParamsType() {
+        return paramsType;
     }
 
     @Override
-    public boolean isParamsArray() {
+    public boolean isLastVarParam() {
         return false;
     }
 
     @Override
-    public StringValue invoke(Value<?>... params) {
+    public StringValue invoke(Value<?>[] params) {
         throw new UnsupportedOperationException("This function cannot be invoked!");
     }
 }

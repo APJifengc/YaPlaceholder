@@ -6,10 +6,16 @@ import cn.ykdlb.yaplaceholder.value.BooleanValue;
 import cn.ykdlb.yaplaceholder.value.IntegerValue;
 import cn.ykdlb.yaplaceholder.value.Value;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class ToBooleanFunction extends Function {
+
+    private final List<List<Type<?>>> paramsType = Collections.singletonList(
+            Collections.singletonList(Type.get("Object"))
+    );
+
     public ToBooleanFunction(int column) {
         super(column);
     }
@@ -20,19 +26,17 @@ public class ToBooleanFunction extends Function {
     }
 
     @Override
-    public List<Type<?>> getParamsType() {
-        return Collections.singletonList(
-                Type.get("Object")
-        );
+    public List<List<Type<?>>> getParamsType() {
+        return paramsType;
     }
 
     @Override
-    public boolean isParamsArray() {
+    public boolean isLastVarParam() {
         return false;
     }
 
     @Override
-    public BooleanValue invoke(Value<?>... params) {
+    public BooleanValue invoke(Value<?>[] params) {
         return ((BooleanValue) Type.get("Boolean").cast(params[0]));
     }
 }

@@ -47,10 +47,10 @@ public class YaPlaceholder extends JavaPlugin {
     }
 
     public void init() {
-        reflections.getSubTypesOf(Function.class).forEach(aClass -> {
+        reflections.getSubTypesOf(Type.class).forEach(aClass -> {
             try {
-                Function type = aClass.getConstructor(int.class).newInstance(0);
-                Function.getFunctionMap().put(type.getName(), type);
+                Type<?> type = aClass.getConstructor().newInstance();
+                Type.getTypeMap().put(type.getName(), type);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -64,10 +64,10 @@ public class YaPlaceholder extends JavaPlugin {
             }
         });
 
-        reflections.getSubTypesOf(Type.class).forEach(aClass -> {
+        reflections.getSubTypesOf(Function.class).forEach(aClass -> {
             try {
-                Type<?> type = aClass.getConstructor().newInstance();
-                Type.getTypeMap().put(type.getName(), type);
+                Function type = aClass.getConstructor(int.class).newInstance(0);
+                Function.getFunctionMap().put(type.getName(), type);
             } catch (Exception e) {
                 e.printStackTrace();
             }

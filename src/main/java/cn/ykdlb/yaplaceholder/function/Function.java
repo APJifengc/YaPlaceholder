@@ -29,7 +29,7 @@ public abstract class Function extends Component {
     }
 
     public abstract String getName();
-    public abstract List<Type<?>> getParamsType();
-    public abstract boolean isParamsArray();
-    public abstract Value<?> invoke(Value<?>... params);
+    public abstract List<List<Type<?>>> getParamsType();
+    public abstract boolean isLastVarParam();
+    public abstract Value<?> invoke(Value<?>[] params);
 }

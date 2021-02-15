@@ -6,10 +6,16 @@ import cn.ykdlb.yaplaceholder.value.DecimalValue;
 import cn.ykdlb.yaplaceholder.value.IntegerValue;
 import cn.ykdlb.yaplaceholder.value.Value;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class ToDecimalFunction extends Function {
+
+    private final List<List<Type<?>>> paramsType = Collections.singletonList(
+            Collections.singletonList(Type.get("Object"))
+    );
+
     public ToDecimalFunction(int column) {
         super(column);
     }
@@ -20,19 +26,17 @@ public class ToDecimalFunction extends Function {
     }
 
     @Override
-    public List<Type<?>> getParamsType() {
-        return Collections.singletonList(
-                Type.get("Object")
-        );
+    public List<List<Type<?>>> getParamsType() {
+        return paramsType;
     }
 
     @Override
-    public boolean isParamsArray() {
+    public boolean isLastVarParam() {
         return false;
     }
 
     @Override
-    public DecimalValue invoke(Value<?>... params) {
+    public DecimalValue invoke(Value<?>[] params) {
         return ((DecimalValue) Type.get("Decimal").cast(params[0]));
     }
 }

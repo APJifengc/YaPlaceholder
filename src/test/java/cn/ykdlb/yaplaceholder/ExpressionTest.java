@@ -21,9 +21,12 @@ import static org.mockito.Mockito.*;
 
 class ExpressionTest {
 
+    public ExpressionTest() throws NoSuchFieldException, IllegalAccessException {
+        init();
+    }
+
     @Test
     public void fromInfixExpression() throws Exception {
-        init();
         Expression test1 = Expression.fromInfixExpression("5+9");
         System.out.println("test1: " + test1);
         assertEquals(3, test1.size());
@@ -93,7 +96,7 @@ class ExpressionTest {
 
         Expression test7 = Expression.fromInfixExpression("switch(5)");
         System.out.println("test7: " + test7);
-        assertTrue(test7.isError());
+        assertFalse(test7.isError());
 
         Expression test8 = Expression.fromInfixExpression("switch(2,true,false)");
         System.out.println("test8: " + test8);
@@ -107,7 +110,6 @@ class ExpressionTest {
 
     @Test
     public void calculateValue() throws Exception {
-        init();
         OfflinePlayer player = mock(OfflinePlayer.class);
         Expression test1 = Expression.fromInfixExpression("if(5==(2+switch(1,2,3)),9d,6f)*3D");
         System.out.println("test1: " + test1);
@@ -116,12 +118,6 @@ class ExpressionTest {
         Expression test2 = Expression.fromInfixExpression("if(!(1==1),1,2)");
         System.out.println("test2:" + test2);
         assertEquals("2", test2.calculateValue(player));
-
-        var test3 = Expression.fromInfixExpression("1+2+3*2+4+5");
-        System.out.println(measureNanoTime(() -> {
-            for (int i = 0; i < 24; i++) System.out.println("111");
-            test3.calculateValue(player);
-        }));
     }
 
     public void init() throws NoSuchFieldException, IllegalAccessException {

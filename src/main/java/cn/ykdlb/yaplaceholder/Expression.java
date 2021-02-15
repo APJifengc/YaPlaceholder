@@ -17,11 +17,11 @@ import cn.ykdlb.yaplaceholder.value.StringValue;
 import cn.ykdlb.yaplaceholder.value.Value;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.apache.commons.lang.mutable.MutableInt;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class Expression extends ArrayList<Component> {
     public static final String ERROR_STRING = "§4Error";
@@ -101,14 +101,18 @@ public class Expression extends ArrayList<Component> {
                         paramCounter.peek().add(1);
                         Function function = depth.peek();
                         int count = paramCounter.peek().toInteger();
-                        if (function.isParamsArray()) {
-                            if (function.getParamsType().size() > count) {
-                                printErrorMessage(infix, String.format("Expected at least %d arguments, found %d.", function.getParamsType().size(), count), i);
+                        var paramSizes = function.getParamsType().stream()
+                                .map(List::size).collect(Collectors.toList());
+                        int min = paramSizes.stream().min(Comparator.comparingInt(Integer::intValue)).orElse(0);
+                        if (function.isLastVarParam()) {
+                            if (count < min - 1) {
+                                printErrorMessage(infix, String.format("Expected at least %d arguments, but found %d.", min, count), i);
                                 return ERROR;
                             }
                         } else {
-                            if (function.getParamsType().size() != count) {
-                                printErrorMessage(infix, String.format("Expected %d arguments, found %d.", function.getParamsType().size(), count), i);
+                            int max = paramSizes.stream().max(Comparator.comparingInt(Integer::intValue)).orElse(0);
+                            if (count < min || count > max) {
+                                printErrorMessage(infix, String.format("Expected %d arguments, but found %d.", min, count), i);
                                 return ERROR;
                             }
                         }
@@ -141,17 +145,18 @@ public class Expression extends ArrayList<Component> {
                         builder.append(ch);
                         status = Status.OPERATOR;
                     } else {
-                        if ((builder.length() != 0 || ch != '!' || infix.charAt(i + 1) == '=' ) && (builder.length() != 0 || ch != '-')) try {
-                            expression.add(Value.getValueFromString(builder.toString(), i - builder.length()));
-                            status = Status.OPERATOR;
-                            builder.delete(0, builder.length());
-                            builder.append(ch);
-                            if (!operators.empty() && operators.peek() instanceof LogicalNot)
-                                expression.add(operators.pop());
-                        } catch (UnknownDataTypeException e) {
-                            printErrorMessage(infix, e.getMessage(), i - builder.length());
-                            return ERROR;
-                        }
+                        if ((builder.length() != 0 || ch != '!' || infix.charAt(i + 1) == '=') && (builder.length() != 0 || ch != '-'))
+                            try {
+                                expression.add(Value.getValueFromString(builder.toString(), i - builder.length()));
+                                status = Status.OPERATOR;
+                                builder.delete(0, builder.length());
+                                builder.append(ch);
+                                if (!operators.empty() && operators.peek() instanceof LogicalNot)
+                                    expression.add(operators.pop());
+                            } catch (UnknownDataTypeException e) {
+                                printErrorMessage(infix, e.getMessage(), i - builder.length());
+                                return ERROR;
+                            }
                         else {
                             if (ch == '!') operators.push(new LogicalNot(i));
                             if (ch == '-') {
@@ -236,9 +241,13 @@ public class Expression extends ArrayList<Component> {
             if (component instanceof Function) {
                 List<Value<?>> paramList = new ArrayList<>();
                 while (!(valueStack.peek() instanceof StartParam)) paramList.add((Value<?>) valueStack.pop());
+                int count = paramList.size();
                 valueStack.pop();
                 Collections.reverse(paramList);
-                List<Type<?>> paramsTypes = ((Function) component).getParamsType();
+                var function = (Function) component;
+                var paramsTypes = function.getParamsType().stream()
+                        .filter(it -> function.isLastVarParam() ? count >= it.size() : count == it.size())
+                        .collect(Collectors.toList()).get(0);
                 for (int i = 0; i < paramList.size(); i++) {
                     Value<?> value = paramList.get(i);
                     Type<?> type = paramsTypes.get(Math.min(i, paramsTypes.size() - 1));

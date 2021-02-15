@@ -54,7 +54,7 @@ public class IntegerValue extends Value<Integer> {
                 getColumn()
         );
         if (operator instanceof Mod) return new IntegerValue(
-                getValue() % intValue,
+                Math.floorMod(getValue(),intValue),
                 getColumn()
         );
         if (operator instanceof BitwiseAnd) return new IntegerValue(

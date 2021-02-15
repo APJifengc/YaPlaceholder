@@ -11,6 +11,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class ToIntegerFunction extends Function {
+
+    private final List<List<Type<?>>> paramsType = Collections.singletonList(
+            Collections.singletonList(Type.get("Object"))
+    );
+
     public ToIntegerFunction(int column) {
         super(column);
     }
@@ -21,19 +26,17 @@ public class ToIntegerFunction extends Function {
     }
 
     @Override
-    public List<Type<?>> getParamsType() {
-        return Collections.singletonList(
-                Type.get("Object")
-        );
+    public List<List<Type<?>>> getParamsType() {
+        return paramsType;
     }
 
     @Override
-    public boolean isParamsArray() {
+    public boolean isLastVarParam() {
         return false;
     }
 
     @Override
-    public IntegerValue invoke(Value<?>... params) {
+    public IntegerValue invoke(Value<?>[] params) {
         return ((IntegerValue) Type.get("Integer").cast(params[0]));
     }
 }

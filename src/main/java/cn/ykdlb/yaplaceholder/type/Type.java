@@ -1,10 +1,9 @@
 package cn.ykdlb.yaplaceholder.type;
 
-import cn.ykdlb.yaplaceholder.YaPlaceholder;
 import cn.ykdlb.yaplaceholder.value.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,9 +20,12 @@ public abstract class Type<T> {
 
     @NotNull
     public abstract String getName();
+
     @NotNull
     public abstract Value<T> getValue(String shownText, int column);
+
     public abstract boolean isType(String shownText);
+
     @NotNull
     public abstract Value<T> cast(Value<?> value) throws ClassCastException;
 }

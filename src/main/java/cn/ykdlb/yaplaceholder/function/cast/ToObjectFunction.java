@@ -10,6 +10,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class ToObjectFunction extends Function {
+
+    private final List<List<Type<?>>> paramsType = Collections.singletonList(
+            Collections.singletonList(Type.get("Object"))
+    );
+
     public ToObjectFunction(int column) {
         super(column);
     }
@@ -20,19 +25,17 @@ public class ToObjectFunction extends Function {
     }
 
     @Override
-    public List<Type<?>> getParamsType() {
-        return Collections.singletonList(
-                Type.get("Object")
-        );
+    public List<List<Type<?>>> getParamsType() {
+        return paramsType;
     }
 
     @Override
-    public boolean isParamsArray() {
+    public boolean isLastVarParam() {
         return false;
     }
 
     @Override
-    public ObjectValue invoke(Value<?>... params) {
+    public ObjectValue invoke(Value<?>[] params) {
         return ((ObjectValue) Type.get("Object").cast(params[0]));
     }
 }
