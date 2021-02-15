@@ -120,8 +120,9 @@ class ExpressionTest {
         assertEquals("2", test2.calculateValue(player));
 
         Expression test3 = Expression.fromInfixExpression("!if(-1+1==0, 1-5==2, -3+2==(-1))");
+        System.out.println(test3);
         assertFalse(test3.isError());
-        assertEquals("false", test3.calculateValue(player));
+        assertEquals("true", test3.calculateValue(player));
     }
 
     @Test

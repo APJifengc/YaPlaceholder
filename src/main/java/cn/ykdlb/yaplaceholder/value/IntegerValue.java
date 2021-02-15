@@ -25,7 +25,7 @@ public class IntegerValue extends Value<Integer> {
                 if (value.getValue() instanceof Double) value = Type.get("Decimal").cast(value);
                 if (value.getValue() instanceof String) value = Type.get("String").cast(value);
             } catch (ClassCastException e) {
-                throw new ClassCastException("The value " + value.getString()+ " cannot cast to Boolean.");
+                throw new ClassCastException("The value " + value.getString()+ " cannot cast to Integer.");
             }
         }
         int intValue;

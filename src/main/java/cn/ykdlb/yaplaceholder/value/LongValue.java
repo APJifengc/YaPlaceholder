@@ -25,7 +25,7 @@ public class LongValue extends Value<Long> {
                 if (value.getValue() instanceof Double) value = Type.get("Decimal").cast(value);
                 if (value.getValue() instanceof String) value = Type.get("String").cast(value);
             } catch (ClassCastException e) {
-                throw new ClassCastException("The value " + value.getString()+ " cannot cast to Boolean.");
+                throw new ClassCastException("The value " + value.getString()+ " cannot cast to Long.");
             }
         }
         long intValue;
@@ -106,7 +106,7 @@ public class LongValue extends Value<Long> {
                 getColumn()
         );
         throw new UnsupportedOperationException("The operator " + operator.getString() +
-                " is not supported for the Integer type.");
+                " is not supported for the Long type.");
     }
 
     @Override
